@@ -13,6 +13,8 @@ To get this driver to work, clone this repo and install the dependencies below :
 pip install -r requirements.txt
 ```
 
+Run with "python app.py"
+
 I hope to provide a Windows binary soon
 
 This project was made possible by the ASCOM AlpycaDevice SDK https://github.com/ASCOMInitiative/AlpycaDevice, KrystianD who worked out the encryption https://github.com/KrystianD/bm2-battery-monitor/ and SimpleBLE which is much easier to work with than Bleak https://github.com/OpenBluetoothToolbox/SimpleBLE/
