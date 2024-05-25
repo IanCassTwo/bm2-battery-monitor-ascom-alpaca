@@ -203,7 +203,7 @@ class minswitchvalue:
     def on_get(self, req: Request, resp: Response, devnum: int):
 
         try:
-            resp.text = PropertyResponse(0, req).json
+            resp.text = PropertyResponse(9, req).json
         except Exception as ex:
             resp.text = PropertyResponse(None, req,
                             DriverException(0x500, 'Switch.Minswitchvalue failed', ex)).json
@@ -213,7 +213,7 @@ class maxswitchvalue:
 
     def on_get(self, req: Request, resp: Response, devnum: int):
         try:
-            resp.text = PropertyResponse(15, req).json
+            resp.text = PropertyResponse(16, req).json
         except Exception as ex:
             resp.text = PropertyResponse(None, req,
                             DriverException(0x500, 'Switch.Maxswitchvalue failed', ex)).json
