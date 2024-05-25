@@ -13,14 +13,13 @@
 # ??-???-????   abc Initial edit
 
 from falcon import Request, Response, HTTPBadRequest, before
-from logging import Logger
-from shr import PropertyResponse, MethodResponse, PreProcessRequest, \
-                get_request_field, to_bool
+import logging
+from shr import PropertyResponse, MethodResponse, PreProcessRequest, get_request_field, to_bool
 from exceptions import *        # Nothing but exception classes
 from config import Config
-from bm2.client import BM2Client
+from ble.client import Client
 
-logger: Logger = None
+logger = logging.getLogger()
 
 # ----------------------
 # MULTI-INSTANCE SUPPORT
@@ -31,9 +30,7 @@ logger: Logger = None
 # set to 0 for the simple case of controlling only one instance of this device type.
 #
 maxdev = 0                      # Single instance
-safe = 1
-connected = 0
-bm2 = None
+client: Client=None
 
 # -----------
 # DEVICE INFO
@@ -42,19 +39,14 @@ bm2 = None
 ## EDIT FOR YOUR DEVICE ##
 class SafetymonitorMetadata:
     """ Metadata describing the Safetymonitor Device. Edit for your device"""
-    Name = 'BM2 Batter Monitor Safetymonitor'
+    Name = 'BM2 Battery Monitor Safetymonitor device'
     Version = '0.01'
-    Description = 'An ASCOM Safetymonitor for the BM2 bluetooth batter monitor'
+    Description = 'An ASCOM Safetymonitor for the BM2 bluetooth battery monitor'
     DeviceType = 'Safetymonitor'
     DeviceID = '14c9814f-0516-4288-870a-b31d4c35111d'
     Info = 'Alpaca BM2 Safetymonitor Device\nImplements ISafetymonitor\nASCOM Initiative'
     MaxDeviceNumber = maxdev
     InterfaceVersion = 1
-
-def start_safetymonitor_device(logger: logger):
-    logger = logger
-    bm2 = BM2Client(Config.addr)
-
 
 # --------------------
 # RESOURCE CONTROLLERS
@@ -83,22 +75,24 @@ class commandstring:
 @before(PreProcessRequest(maxdev))
 class connected:
     def on_get(self, req: Request, resp: Response, devnum: int):
-        resp.text = PropertyResponse(connected, req).json
+        resp.text = PropertyResponse(client.isConnected("sm"), req).json
+        logger.debug(f"connected: {resp.text}")
 
     def on_put(self, req: Request, resp: Response, devnum: int):
         conn_str = get_request_field('Connected', req)
         conn = to_bool(conn_str)              # Raises 400 Bad Request if str to bool fails
+
         try:
             # --------------------------------
             ### CONNECT/DISCONNECT()PARAM) ###
             # --------------------------------
             if (conn):
-                bm2.start()
-                bm2.wait_for_connected()
-                connected = 1
-            else:
-                bm2.stop()
-                connected = 0
+
+                client.connect("sm")
+                logger.debug("connected: Starting battery monitor")
+            else:                
+                logger.debug("connected: Stopping battery monitor")
+                client.disconnect("sm")
             resp.text = MethodResponse(req).json
         except Exception as ex:
             resp.text = MethodResponse(req, DriverException(0x500, 'Safetymonitor.Connected failed', ex)).json
@@ -138,19 +132,20 @@ class issafe:
 
     def on_get(self, req: Request, resp: Response, devnum: int):
 
-        if not connected:
+        safe = False
+        logger.debug(f"isSafe: called")
+        if not client.isConnected("sm"):
             resp.text = PropertyResponse(None, req,
                             NotConnectedException()).json
             return
 
         # What's our current voltage?
-        voltage = bm2.get_voltage()
+        voltage = client.getVoltage()
+        logger.debug(f"Our voltage is {voltage} and our threshold is {Config.threshold}")
 
         ## check voltage against threshold
-        if voltage < Config.threshold: 
-            safe = 0
-        else:
-            safe = 1
+        if voltage > float(Config.threshold): 
+            safe = True
 
         try:
             resp.text = PropertyResponse(safe, req).json

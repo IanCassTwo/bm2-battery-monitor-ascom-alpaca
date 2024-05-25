@@ -68,11 +68,14 @@ import log
 from config import Config
 from discovery import DiscoveryResponder
 from shr import set_shr_logger
+from ble.client import Client
+
 
 #########################
 # FOR EACH ASCOM DEVICE #
 #########################
 import safetymonitor
+import switch
 
 #--------------
 API_VERSION = 1
@@ -218,14 +221,18 @@ def main():
     # Share this logger throughout
     log.logger = logger
     exceptions.logger = logger
-    safetymonitor.start_safetymonitor_device(logger)
+    
+    # Our shared BLE Client
+    bleclient = Client();
+
     discovery.logger = logger
     set_shr_logger(logger)
 
     #########################
     # FOR EACH ASCOM DEVICE #
     #########################
-    safetymonitor.logger = logger
+    safetymonitor.client = bleclient
+    switch.client = bleclient
 
     # -----------------------------
     # Last-Chance Exception Handler
@@ -249,6 +256,7 @@ def main():
     # FOR EACH ASCOM DEVICE #
     #########################
     init_routes(falc_app, 'safetymonitor', safetymonitor)
+    init_routes(falc_app, 'switch', switch)
     #
     # Initialize routes for Alpaca support endpoints
     falc_app.add_route('/management/apiversions', management.apiversions())
@@ -256,6 +264,7 @@ def main():
     falc_app.add_route(f'/management/v{API_VERSION}/configureddevices', management.configureddevices())
     falc_app.add_route('/setup', setup.svrsetup())
     falc_app.add_route(f'/setup/v{API_VERSION}/safetymonitor/{{devnum}}/setup', setup.devsetup())
+    falc_app.add_route(f'/setup/v{API_VERSION}/switch/{{devnum}}/setup', setup.devsetup())
 
     #
     # Install the unhandled exception processor. See above,

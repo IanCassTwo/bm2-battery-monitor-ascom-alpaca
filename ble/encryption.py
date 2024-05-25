@@ -1,5 +1,4 @@
 from typing import Any, cast, Union
-
 from Crypto.Cipher import AES
 
 BM2_ENCRYPTION_KEY = b"\x6c\x65\x61\x67\x65\x6e\x64\xff\xfe\x31\x38\x38\x32\x34\x36\x36"

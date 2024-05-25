@@ -70,7 +70,6 @@ class Config:
     # --------------
     # Device Section
     # --------------
-    addr: bool = get_toml('device', 'addr')
     threshold: bool = get_toml('device', 'threshold')
 
     # ---------------

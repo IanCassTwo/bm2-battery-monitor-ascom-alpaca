@@ -83,7 +83,7 @@ def set_shr_logger(lgr):
 class DeviceMetadata:
     """ Metadata describing the Alpaca Device/Server """
     Version = '0.2'
-    Description = 'Alpaca Raspberry Pi Camera '
+    Description = 'BM2 Battery Monitor'
     Manufacturer = 'ASCOM Initiative'
 
 
@@ -175,21 +175,21 @@ class PreProcessRequest():
     def _check_request(self, req: Request, devnum: int):  # Raise on failure
         if devnum > self.maxdev:
             msg = f'Device number {str(devnum)} does not exist. Maximum device number is {self.maxdev}.'
-            logger.error(msg)
+            #logger.error(msg)
             raise HTTPBadRequest(title=_bad_title, description=msg)
         test: str = get_request_field('ClientID', req, True)        # Caseless
         if test is None:
             msg = 'Request has missing Alpaca ClientID value'
-            logger.error(msg)
+            #logger.error(msg)
             raise HTTPBadRequest(title=_bad_title, description=msg)
         if not self._pos_or_zero(test):
             msg = f'Request has bad Alpaca ClientID value {test}'
-            logger.error(msg)
+            #logger.error(msg)
             raise HTTPBadRequest(title=_bad_title, description=msg)
         test: str = get_request_field('ClientTransactionID', req, True)
         if not self._pos_or_zero(test):
             msg = f'Request has bad Alpaca ClientTransactionID value {test}'
-            logger.error(msg)
+            #logger.error(msg)
             raise HTTPBadRequest(title=_bad_title, description=msg)
 
     #

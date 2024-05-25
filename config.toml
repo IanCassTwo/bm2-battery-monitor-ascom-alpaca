@@ -9,11 +9,10 @@ location = 'Anywhere on Earth'  # Anything you want here
 verbose_driver_exceptions = true
 
 [device]
-addr = 12345
 threshold = 12
 
 [logging]
-log_level = 'INFO'
+log_level = 'DEBUG'
 log_to_stdout = true
 max_size_mb = 50
 num_keep_logs = 10

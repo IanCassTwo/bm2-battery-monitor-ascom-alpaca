@@ -48,6 +48,7 @@ from config import Config
 from logging import Logger
 # For each *type* of device served
 from safetymonitor import SafetymonitorMetadata
+from switch import SwitchMetadata
 
 logger: Logger = None
 #logger = None                   # Safe on Python 3.7 but no intellisense in VSCode etc.
@@ -84,10 +85,16 @@ class configureddevices():
     def on_get(self, req: Request, resp: Response):
         confarray = [    # TODO ADD ONE FOR EACH DEVICE TYPE AND INSTANCE SERVED
             {
-            'DeviceName'    : CameraMetadata.Name,
-            'DeviceType'    : CameraMetadata.DeviceType,
+            'DeviceName'    : SafetymonitorMetadata.Name,
+            'DeviceType'    : SafetymonitorMetadata.DeviceType,
             'DeviceNumber'  : 0,
-            'UniqueID'      : CameraMetadata.DeviceID
+            'UniqueID'      : SafetymonitorMetadata.DeviceID
+            },
+            {
+            'DeviceName'    : SwitchMetadata.Name,
+            'DeviceType'    : SwitchMetadata.DeviceType,
+            'DeviceNumber'  : 0,
+            'UniqueID'      : SwitchMetadata.DeviceID
             }
         ]
         resp.text = PropertyResponse(confarray, req).json
