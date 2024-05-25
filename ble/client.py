@@ -53,7 +53,7 @@ class Client():
             adapter = adapters[0]
             self.logger.debug(f"Selected bluetooth adapter: {adapter.identifier()} [{adapter.address()}]")
 
-            adapter.scan_for(3000)
+            adapter.scan_for(5000)
 
             peripherals = adapter.scan_get_results()
 

@@ -11,24 +11,19 @@ class VoltageLogger:
     def __init__(self, client):
         self.client = client
         self.logger = logging.getLogger()
+        self.csvlogger = self._init_logging()
         self.interval = Config.interval
         self.prefix = Config.prefix
         self.running = False
         self.scheduler = sched.scheduler(time.time, time.sleep)
         self.thread = threading.Thread(target=self._run_scheduler)
         self.thread.daemon = True
-        self.csvfile = None
-        self.csvwriter = None
 
     def start(self):
         if not self.running:
             self.logger.info("CSV logger started")
             self.client.connect("logger")
             self.running = True
-            timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-            filename = f"logs/{self.prefix}_{timestamp}.csv"
-            self.csvfile = open(filename, 'a', newline='')
-            self.csvwriter = csv.writer(self.csvfile)
             self._schedule_next()
             if not self.thread.is_alive():
                 self.thread = threading.Thread(target=self._run_scheduler)
@@ -47,8 +42,6 @@ class VoltageLogger:
         self.scheduler.empty()
         if self.thread.is_alive():
             self.thread.join()
-        if self.csvfile:
-            self.csvfile.close()
 
     def _log_voltage(self):
         if self.running:
@@ -56,8 +49,7 @@ class VoltageLogger:
                 self.logger.warn("Client is not connected. Restarting logger.")
                 self.restart()
             voltage = self.client.getVoltage()
-            self.csvwriter.writerow([time.time(), voltage])
-            self.csvfile.flush()
+            self.csvlogger.info(f"{time.time()},{voltage}")
             self._schedule_next()
 
     def _schedule_next(self):
@@ -67,3 +59,19 @@ class VoltageLogger:
     def _run_scheduler(self):
         self.scheduler.run()
 
+    def _init_logging(self):
+
+        logging.basicConfig(level=Config.log_level)
+        logger = logging.getLogger('VoltageLogger')
+        formatter = logging.Formatter('%(message)s')
+        handler = logging.handlers.RotatingFileHandler('logs/voltages.csv',
+                                                        mode='w',
+                                                        delay=True,     # Prevent creation of empty logs
+                                                        maxBytes=Config.max_size_mb * 1000000,
+                                                        backupCount=Config.num_keep_logs)
+        handler.setLevel(Config.log_level)
+        handler.setFormatter(formatter)
+        handler.doRollover()                                            # Always start with fresh log
+        logger.addHandler(handler)
+        logger.info("timestamp,voltage")
+        return logger
