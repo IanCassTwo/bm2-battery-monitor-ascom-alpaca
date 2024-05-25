@@ -71,7 +71,12 @@ class Config:
     # Device Section
     # --------------
     threshold: bool = get_toml('device', 'threshold')
-
+    log_csv: bool = get_toml('device', 'log_csv')
+    # --------------
+    # Voltage Logger Section
+    # --------------
+    interval: int = get_toml('voltage_logger', 'interval')
+    prefix: str = get_toml('voltage_logger', 'prefix')
     # ---------------
     # Logging Section
     # ---------------

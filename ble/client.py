@@ -43,60 +43,67 @@ class Client():
         self._module_states = {}
 
     def _findPeripheral(self):
-        self.logger.info("Searching for battery monitor")
-        adapters = simplepyble.Adapter.get_adapters()
-        if len(adapters) == 0:
-            self.logger.error("No adapters found")
-            return None
-        
-        adapter = adapters[0]
-        self.logger.debug(f"Selected bluetooth adapter: {adapter.identifier()} [{adapter.address()}]")
+        for i in range(3):
+            self.logger.info(f"Searching for battery monitor [attempt #{i}]")
+            adapters = simplepyble.Adapter.get_adapters()
+            if len(adapters) == 0:
+                self.logger.error("No adapters found")
+                return None
+            
+            adapter = adapters[0]
+            self.logger.debug(f"Selected bluetooth adapter: {adapter.identifier()} [{adapter.address()}]")
 
-        # Scan for 5 seconds
-        adapter.scan_for(5000)
+            adapter.scan_for(3000)
 
-        peripherals = adapter.scan_get_results()
+            peripherals = adapter.scan_get_results()
 
-        for p in peripherals:
-            if p.identifier() == TARGET_NAME:
-                self.logger.info(f"Found {p.identifier()} [{p.address()}]")
-                return p
+            for p in peripherals:
+                if p.identifier() == TARGET_NAME:
+                    self.logger.info(f"Found {p.identifier()} [{p.address()}]")
+                    return p
     
     def isConnected(self, id):
-        if self.peripheral != None:
-            return self._module_states.get(id, False) and self.peripheral.is_connected()
-        return False
-    #FIXME need to handle unexpected disconnection
+        if self.lock:
+            if self.peripheral != None:
+                if not self.peripheral.is_connected():
+                    # We're disconnected!
+                    self._module_states = {}
+                    return False
+                return self._module_states.get(id, False) and self.peripheral.is_connected()
+            
+            return False
 
     def getVoltage(self):
         return float(self.notificationHandler.getNotificationData())
 
     def connect(self, id):
-        if self._connection_count == 0:
-            self._connect()
-        self._connection_count += 1
-        self._module_states[id] = True
+        self.logger.debug(f"connect called by {id}")
+        with self.lock:
+            if self._connection_count == 0:
+                self._connect()
+            self._connection_count += 1
+            self._module_states[id] = True
 
     def disconnect(self, id):
-        if id in self._module_states and self._module_states[id]:
-            self._module_states[id] = False
-            self._connection_count -= 1
-            if self._connection_count == 0:
-                self._disconnect()
+        self.logger.debug(f"disconnect called by {id}")
+        with self.lock:
+            if id in self._module_states and self._module_states[id]:
+                self._module_states[id] = False
+                self._connection_count -= 1
+                if self._connection_count == 0:
+                    self._disconnect()
 
     def _connect(self):
-        if self.lock:
+        if self.peripheral == None:
+            self.peripheral = self._findPeripheral()
             if self.peripheral == None:
-                self.peripheral = self._findPeripheral()
-                if self.peripheral == None:
-                    self.logger.fatal(f"Can't find {TARGET_NAME}")
-                    raise RuntimeError(f"Can't find {TARGET_NAME}")
+                self.logger.fatal(f"Can't find {TARGET_NAME}")
+                raise RuntimeError(f"Can't find {TARGET_NAME}")
 
-            if self.peripheral.is_connected() == False:            
-                self.peripheral.connect()
-                self.peripheral.notify(SERVICE_UUID, CHARACTERISTIC_UUID, self.notificationHandler)
+        if self.peripheral.is_connected() == False:            
+            self.peripheral.connect()
+            self.peripheral.notify(SERVICE_UUID, CHARACTERISTIC_UUID, self.notificationHandler)
 
     def _disconnect(self):
-        with self.lock:
             if self.peripheral != None:
                 self.peripheral.disconnect()      

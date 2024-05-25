@@ -187,9 +187,10 @@ class getswitchvalue:
     def on_get(self, req: Request, resp: Response, devnum: int):
 
         if not client.isConnected("sw"):
-            resp.text = PropertyResponse(None, req,
-                            NotConnectedException()).json
-            return
+            # Should do this but NINA ignores it
+            #resp.text = PropertyResponse(None, req,NotConnectedException()).json
+            #return
+            client.connect("sw")
         
         try:
             resp.text = PropertyResponse(client.getVoltage(), req).json

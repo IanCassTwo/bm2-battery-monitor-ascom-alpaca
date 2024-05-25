@@ -135,9 +135,10 @@ class issafe:
         safe = False
         logger.debug(f"isSafe: called")
         if not client.isConnected("sm"):
-            resp.text = PropertyResponse(None, req,
-                            NotConnectedException()).json
-            return
+            # Should do this but NINA ignores it
+            #resp.text = PropertyResponse(None, req,NotConnectedException()).json
+            #return
+            client.connect("sm")
 
         # What's our current voltage?
         voltage = client.getVoltage()

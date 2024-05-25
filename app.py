@@ -69,6 +69,7 @@ from config import Config
 from discovery import DiscoveryResponder
 from shr import set_shr_logger
 from ble.client import Client
+from voltagelogger import VoltageLogger
 
 
 #########################
@@ -227,6 +228,10 @@ def main():
 
     discovery.logger = logger
     set_shr_logger(logger)
+
+    if Config.log_csv:
+        voltagelogger = VoltageLogger(bleclient)
+        voltagelogger.start()
 
     #########################
     # FOR EACH ASCOM DEVICE #
